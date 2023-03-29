@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<!--D3.js library v.7-->
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		
+		<script src='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js'></script>
+		<link href='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css' rel='stylesheet' />
+		
+		
+		<style>
+			#map
+			{
+				position: relative;
+				z-index: 0;
+				width: 100%;
+				height: 500px;
+			}
+		</style>
+		
+		
+		<title> D3 Tutorial </title>
+	</head>
+
+	<body>
+		<h2>Working with d3 and Mapbox</h2>
+		
+		<!-- a DIV container with id "map"-->
+		<div id="map">
+		
+		</div>
+		
+		<script>
+			// You'll need to put your own token in here
+			let YOUR_TOKEN = "pk.eyJ1IjoibWI0NjQiLCJhIjoiY2xmY2Niam1uMmhoODNzbzRsa243cm5keiJ9.QIc4RN3ydBoBNnCP6mgKng";
+
+			const dataPath = "data/edinburghLocations.csv";
+
+			mapboxgl.accessToken = YOUR_TOKEN;
+
+			const data = await d3.csv(dataPath);
+			console.log(data);
+
+			const mapBox = new mapboxgl.Map({
+				container: "map",
+				style: "mapbox://styles/mapbox/streets-v9",
+				center: [-3.2, 55.95],
+				zoom: 11
+			})
+
+			const container = mapBox.getCanvasContainer();
+			const svg = d3.select(container)
+				.append("svg")
+				.attr("width", "100%")
+				.attr("height", "500")
+				.style("position", "absolute")
+				.style("z-index", 2);
+
+			const project = (d) => { return mapBox.project(new mapboxgl.LngLat(d.lon, d.lat)); }
+
+			const dots = svg.selectAll("circle")
+				.data(data)
+				.enter()
+				.append("circle")
+				.attr("r", 5)
+				.style("fill", '#ff0000')
+				.on("mouseover", (e, d) => {
+					d3.select("body")
+						.append("div")
+						.attr("class", "infobox")
+						.text(`${d.text}, ${d.year}`);
+				})
+				.on("mouseout", (e, d) => {
+					d3.selectAll(".infobox")
+						.remove();
+				});
+
+			const render = () => {
+				dots
+					.attr("cx", d => project(d).x)
+					.attr("cy", d => project(d).y)
+			}
+
+			mapBox.on("viewreset", render);
+			mapBox.on("move", render);
+			mapBox.on("moveend", render);
+			render();
+	
+			
+		</script>
+		
+	</body>
+
+</html>
